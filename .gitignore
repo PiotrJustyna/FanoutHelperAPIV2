@@ -1,0 +1,9 @@
+bin/
+obj/
+/packages/
+.DS_Store
+metrics.json
+plot.html
+results.bin
+**/.vs
+./idea/*
