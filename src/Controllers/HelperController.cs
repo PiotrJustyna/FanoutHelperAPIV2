@@ -1,9 +1,12 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Orleans;
 
 namespace FanoutHelperAPIV2.Controllers
 {
@@ -11,6 +14,12 @@ namespace FanoutHelperAPIV2.Controllers
     [Route("[controller]")]
     public class HelperController : ControllerBase
     {
+        private readonly IClusterClient _clusterClient;
+        public HelperController(IClusterClient clusterClient)
+        {
+            _clusterClient = clusterClient;
+        }
+
         [HttpGet]
         public async Task<ActionResult<Result>> Get(
             int slaMs,
@@ -18,6 +27,11 @@ namespace FanoutHelperAPIV2.Controllers
             int taskDelayMs,
             CancellationToken cancellationToken)
         {
+            var grain =  _clusterClient.GetGrain<IHelloWorld>(0);
+            var result1 = await grain.SayHello("Piotr");
+            
+            Console.WriteLine(result1);
+
             var stopwatch = new Stopwatch();
 
             stopwatch.Start();

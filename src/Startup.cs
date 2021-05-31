@@ -17,7 +17,9 @@ namespace FanoutHelperAPIV2
 
         public void ConfigureServices(IServiceCollection services)
         {
-
+            services.AddSingleton<ClusterClientHostedService>();
+            services.AddSingleton<IHostedService>(_ => _.GetService<ClusterClientHostedService>());
+            services.AddSingleton(_ => _.GetService<ClusterClientHostedService>().Client);
             services.AddControllers();
         }
 
