@@ -1,6 +1,6 @@
 # readme
 
-Fanout Helper API V1 - this API serves as a sub-service of https://github.com/PiotrJustyna/FanoutAPIV1 and is one of FanoutAPIV1's fanout data sources. This API is also task-heavy.
+Fanout Helper API V2 - this API serves as a sub-service of https://github.com/PiotrJustyna/FanoutAPIV2 and is one of FanoutAPIV2's fanout data sources. This API is also task-heavy. The key difference between this project and Fanout Helper API V1 is that the heavy tasking is being delegated to Orleans.
 
 ## parameters
 

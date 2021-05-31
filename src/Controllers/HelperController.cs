@@ -5,7 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 
-namespace FanoutHelperAPIV1.Controllers
+namespace FanoutHelperAPIV2.Controllers
 {
     [ApiController]
     [Route("[controller]")]

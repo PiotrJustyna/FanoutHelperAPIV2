@@ -4,7 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace FanoutHelperAPIV1
+namespace FanoutHelperAPIV2
 {
     public class Startup
     {
