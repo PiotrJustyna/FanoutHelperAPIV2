@@ -15,9 +15,12 @@ namespace FanoutHelperAPIV2.Controllers
     public class HelperController : ControllerBase
     {
         private readonly IClusterClient _clusterClient;
+        private readonly Random _generator;
+        
         public HelperController(IClusterClient clusterClient)
         {
             _clusterClient = clusterClient;
+            _generator = new Random();
         }
 
         [HttpGet]
@@ -27,10 +30,10 @@ namespace FanoutHelperAPIV2.Controllers
             int taskDelayMs,
             CancellationToken cancellationToken)
         {
-            var grain =  _clusterClient.GetGrain<IHelloWorld>(0);
-            var result1 = await grain.SayHello("Piotr");
-            
-            Console.WriteLine(result1);
+            var grain1 = _clusterClient.GetGrain<IWorker>(_generator.Next(0, Int32.MaxValue));
+            var grain2 = _clusterClient.GetGrain<IWorker>(_generator.Next(0, Int32.MaxValue));
+            var grain3 = _clusterClient.GetGrain<IWorker>(_generator.Next(0, Int32.MaxValue));
+            var grain4 = _clusterClient.GetGrain<IWorker>(_generator.Next(0, Int32.MaxValue));
 
             var stopwatch = new Stopwatch();
 
@@ -46,29 +49,34 @@ namespace FanoutHelperAPIV2.Controllers
 
             var combinedCancellationToken = combinedCancellationTokenSource.Token;
 
+            // 2021-05-31 PJ:
+            // Link to the combinedCancellationToken.
+            // Also, reduce grain disposal time on the backend side.
+            var grainCancellationTokenSource = new GrainCancellationTokenSource();
+            
             var tasksPerParentTask = tasksPerRequest / 4;
-        
+
             var parentTasks = new List<Task<FanoutTaskStatus>>
             {
-                ParentTask(
+                grain1.ParentTask(
                     tasksPerParentTask,
                     taskDelayMs,
-                    combinedCancellationToken),
+                    grainCancellationTokenSource.Token),
 
-                ParentTask(
+                grain2.ParentTask(
                     tasksPerParentTask,
                     taskDelayMs,
-                    combinedCancellationToken),
-            
-                ParentTask(
-                    tasksPerParentTask,
-                    taskDelayMs,
-                    combinedCancellationToken),
+                    grainCancellationTokenSource.Token),
 
-                ParentTask(
+                grain3.ParentTask(
                     tasksPerParentTask,
                     taskDelayMs,
-                    combinedCancellationToken)
+                    grainCancellationTokenSource.Token),
+
+                grain4.ParentTask(
+                    tasksPerParentTask,
+                    taskDelayMs,
+                    grainCancellationTokenSource.Token),
             };
 
             var workTask = Task.WhenAll(parentTasks);
@@ -100,44 +108,8 @@ namespace FanoutHelperAPIV2.Controllers
                     result));
             }
         }
-
-        private async Task<FanoutTaskStatus> ParentTask(
-            int numberOfChildTasks,
-            int taskDelayMs,
-            CancellationToken cancellationToken)
-        {
-            var tasks = new List<Task>();
-
-            for (byte i = 0; i < numberOfChildTasks; i++)
-            {
-                tasks.Add(ChildTask(
-                    taskDelayMs,
-                    cancellationToken));
-            }
-
-            await Task.WhenAll(tasks);
-
-            int successfulTasks = tasks.Count(x => x.IsCompletedSuccessfully);
-
-            return new FanoutTaskStatus(
-                successfulTasks,
-                numberOfChildTasks - successfulTasks);
-        }
-
-        private async Task ChildTask(
-            int childTaskDelayMs,
-            CancellationToken cancellationToken)
-        {
-            await Task.Delay(
-                childTaskDelayMs,
-                cancellationToken);
-        }
     }
 
-    public record FanoutTaskStatus(
-        int NumberOfSuccessfulTasks,
-        int NumberOfFailedTasks);
-    
     public record Result(
         long ServerProcessingTimeMs,
         FanoutTaskStatus CombinedTaskStatus);
